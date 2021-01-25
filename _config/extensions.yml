@@ -7,3 +7,7 @@ After:
 SilverStripe\Core\Injector\Injector:
   SilverStripe\Assets\Storage\AssetStore:
     class: Axllent\ImageOptimiser\Flysystem\FlysystemAssetStore
+
+SilverStripe\Assets\File:
+  allowed_extensions:
+    - webp

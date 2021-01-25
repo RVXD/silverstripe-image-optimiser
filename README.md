@@ -30,7 +30,7 @@ following optimisers if they are both present and in your default path on your s
 ## Installation
 
 ```shell
-composer require axllent/silverstripe-image-optimiser
+composer require axllent/silverstripe-optimised-images
 ```
 
 ### Installing the utilities on Ubuntu:

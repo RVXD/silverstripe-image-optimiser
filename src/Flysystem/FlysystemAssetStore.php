@@ -2,6 +2,10 @@
 namespace Axllent\ImageOptimiser\Flysystem;
 
 use SilverStripe\Assets\Flysystem\FlysystemAssetStore as SS_FlysystemAssetStore;
+use Intervention\Image\ImageManagerStatic as Image;
+use SilverStripe\Assets\ImageManipulation;
+use SilverStripe\Control\Director;
+use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Config\Configurable;
 use Spatie\ImageOptimizer\OptimizerChain;
 
@@ -43,6 +47,14 @@ class FlysystemAssetStore extends SS_FlysystemAssetStore
         ],
     ];
 
+
+    private static $webp_default_quality = 80;
+
+    public function __construct()
+    {
+        $this->webp_quality = $this->config()->webp_default_quality;
+    }
+
     /**
      * Asset Store file from local file
      *
@@ -57,6 +69,7 @@ class FlysystemAssetStore extends SS_FlysystemAssetStore
     public function setFromLocalFile($path, $filename = null, $hash = null, $variant = null, $config = [])
     {
         $this->_optimisePath($path, $filename);
+        $this->createWebPImage($path, $filename, $hash, $variant);
 
         return parent::setFromLocalFile($path, $filename, $hash, $variant, $config);
     }
@@ -79,6 +92,8 @@ class FlysystemAssetStore extends SS_FlysystemAssetStore
             $tmp_file  = TEMP_PATH . DIRECTORY_SEPARATOR . 'raw_' . uniqid() . '.' . $extension;
             file_put_contents($tmp_file, $data);
             $this->_optimisePath($tmp_file, $filename);
+            $this->createWebPImage($tmp_file, $filename, $hash, $variant);
+
             $data = file_get_contents($tmp_file);
             unlink($tmp_file);
         }
@@ -132,4 +147,32 @@ class FlysystemAssetStore extends SS_FlysystemAssetStore
 
         unlink($tmp_file);
     }
+
+    public function createWebPImage($path, $filename, $hash, $variant = false)
+    {
+
+        if (!function_exists('imagewebp')) {
+            // webp not supported
+            return;
+        }
+
+        $orgpath = Director::baseFolder().$this->getAsURL($filename, $hash, $variant);
+
+        $img = Image::make($path);
+        $img->save($this->createWebPName($orgpath), $this->webp_quality, 'webp');
+
+        $img->destroy();
+        gc_collect_cycles();
+    }
+
+    public function createWebPName($filename)
+    {
+        $picname = pathinfo($filename, PATHINFO_FILENAME);
+        $directory = pathinfo($filename, PATHINFO_DIRNAME);
+        $extension = pathinfo($filename, PATHINFO_EXTENSION);
+        return $directory.'/'.$picname.'_'.$extension.'.webp';
+    }
+
+
+
 }
