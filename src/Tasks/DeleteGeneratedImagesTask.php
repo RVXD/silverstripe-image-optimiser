@@ -53,7 +53,9 @@ class DeleteGeneratedImagesTask extends BuildTask
             // warning - super hacky as accessing private methods
             $getID = new ReflectionMethod(FlysystemAssetStore::class, 'getFileID');
             $getID->setAccessible(true);
-            $flyID = $getID->invoke($store, $asetValues['Filename'], $asetValues['Hash']);
+            if( !empty($asetValues['Hash']) ) {
+                $flyID = $getID->invoke($store, $asetValues['Filename'], $asetValues['Hash']);
+            }
             $getFileSystem = new ReflectionMethod(FlysystemAssetStore::class, 'getFilesystemFor');
             $getFileSystem->setAccessible(true);
             /** @var Filesystem $system */
