@@ -33,12 +33,6 @@ class DeleteGeneratedImagesTask extends BuildTask
 
     public function run($request) // phpcs:ignore
     {
-        // only allow for admins
-        if (!Permission::check('ADMIN')) {
-            echo 'You do not have permission for this task';
-            return;
-        }
-
         $images = Image::get();
 
         if(!$images->exists()){
@@ -53,7 +47,9 @@ class DeleteGeneratedImagesTask extends BuildTask
             // warning - super hacky as accessing private methods
             $getID = new ReflectionMethod(FlysystemAssetStore::class, 'getFileID');
             $getID->setAccessible(true);
-            $flyID = $getID->invoke($store, $asetValues['Filename'], $asetValues['Hash']);
+            if( !empty($asetValues['Hash']) ) {
+                $flyID = $getID->invoke($store, $asetValues['Filename'], $asetValues['Hash']);
+            }
             $getFileSystem = new ReflectionMethod(FlysystemAssetStore::class, 'getFilesystemFor');
             $getFileSystem->setAccessible(true);
             /** @var Filesystem $system */
@@ -61,12 +57,14 @@ class DeleteGeneratedImagesTask extends BuildTask
 
             $findVariants = new ReflectionMethod(FlysystemAssetStore::class, 'findVariants');
             $findVariants->setAccessible(true);
-            foreach ($findVariants->invoke($store, $flyID, $system) as $variant) {
-                $isGenerated = strpos($variant, '__');
-                if (!$isGenerated) {
-                    continue;
+            if( $flyID ) {
+                foreach ($findVariants->invoke($store, $flyID, $system) as $variant) {
+                    $isGenerated = strpos($variant, '__');
+                    if (!$isGenerated) {
+                        continue;
+                    }
+                    $system->delete($variant);
                 }
-                $system->delete($variant);
             }
             echo "Deleted generated images for $image->Name" . "<br>";
         }
