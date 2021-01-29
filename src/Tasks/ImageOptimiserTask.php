@@ -101,7 +101,6 @@ class ImageOptimiserTask extends BuildTask
      */
     private function _findOrOptimiseAllImagesAndVariants($optimise = false)
     {
-        $images = Image::get();
 
         // warning - super hacky as accessing private methods
         $getFileSystem = new ReflectionMethod(FlysystemAssetStore::class, 'getFilesystemFor');
